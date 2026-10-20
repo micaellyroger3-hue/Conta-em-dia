@@ -1,1 +1,415 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#146c5b">
+<title>Casa em Dia</title>
+<style>
+:root{--ink:#17212b;--muted:#64748b;--line:#e2e8f0;--bg:#f5f7fa;--accent:#146c5b;--soft:#e5f4ef;--warn:#9a3412}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px system-ui,-apple-system,sans-serif}
+.wrap{max-width:760px;margin:auto;padding:14px 12px 40px}
+.top,.card,.panel{background:white;border:1px solid var(--line);border-radius:16px;padding:16px;margin-bottom:12px}
+.brand{font-size:25px;font-weight:850;letter-spacing:-.6px}
+.sub{color:var(--muted);font-size:13px;margin-top:5px}
+.notice{background:var(--soft);border-radius:10px;padding:10px;margin-top:12px;font-size:13px}
+.nav{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;margin:14px 0}
+.nav button{border:1px solid var(--line);background:white;border-radius:10px;padding:12px 4px;font-size:13px;font-weight:700;color:var(--ink)}
+.nav button.active{background:var(--accent);color:white}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.metric-label{font-size:12px;color:var(--muted)}
+.metric{font-size:22px;font-weight:850;margin-top:5px;overflow-wrap:anywhere}
+.good{color:var(--accent)}.bad{color:var(--warn)}
+h2{font-size:19px;margin:3px 0 12px}h3{font-size:16px;margin:0 0 10px}
+label{display:block;font-size:13px;color:#475569;margin:11px 0 5px}
+input,select,textarea{width:100%;border:1px solid #cbd5e1;border-radius:10px;padding:12px;font:inherit;background:white;color:var(--ink);min-width:0}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.primary,.secondary{cursor:pointer;font-weight:750;border-radius:10px;padding:11px 13px;font-size:14px}
+.primary{border:0;background:var(--accent);color:white;width:100%;margin-top:12px}
+.secondary{border:1px solid var(--line);background:white;color:var(--ink);margin:5px 3px 0 0}
+.item{display:flex;justify-content:space-between;gap:10px;align-items:center;border-top:1px solid var(--line);padding:12px 0}
+.item:first-child{border-top:0}
+.item small{display:block;color:var(--muted);margin-top:4px;overflow-wrap:anywhere}
+.amount{font-weight:800;white-space:nowrap}
+.empty{color:var(--muted);font-size:14px;padding:10px 0}
+.hidden{display:none!important}
+.progress{height:8px;background:var(--line);border-radius:8px;overflow:hidden;margin-top:8px}
+.progress div{height:100%;background:var(--accent)}
+.foot{text-align:center;font-size:12px;color:var(--muted);padding:15px}
+@media(max-width:430px){.wrap{padding:10px 9px 25px}.metric{font-size:19px}.row{grid-template-columns:1fr}.nav button{font-size:12px}.item{gap:5px}.secondary{font-size:12px;padding:8px}}
+</style>
+</head>
+<body>
+<main class="wrap">
+<header class="top">
+  <div class="brand">🏠 Casa em Dia</div>
+  <div class="sub">Organize o dinheiro da casa, pague suas contas e realize seus planos.</div>
+  <div class="notice">Seus dados ficam salvos neste navegador e aparelho. Faça uma exportação de segurança regularmente.</div>
+</header>
 
+<nav class="nav" aria-label="Seções">
+<button type="button" class="active" data-tab="inicio">Início</button>
+<button type="button" data-tab="movimentos">Entradas e despesas</button>
+<button type="button" data-tab="contas">Contas</button>
+<button type="button" data-tab="metas">Metas</button>
+<button type="button" data-tab="relatorio">Resumo mensal</button>
+<button type="button" data-tab="casa">Configurações</button>
+</nav>
+
+<section id="inicio" class="tab">
+<div class="grid">
+<div class="card"><div class="metric-label">Entradas do mês</div><div class="metric good" id="mIncome">R$ 0,00</div></div>
+<div class="card"><div class="metric-label">Despesas registradas</div><div class="metric bad" id="mExpense">R$ 0,00</div></div>
+<div class="card"><div class="metric-label">Contas pendentes</div><div class="metric" id="mBills">R$ 0,00</div></div>
+<div class="card"><div class="metric-label">Saldo após contas</div><div class="metric" id="mBalance">R$ 0,00</div></div>
+</div>
+<div class="card">
+<div class="metric-label">Limite estimado para gastar por dia</div>
+<div class="metric good" id="daily">R$ 0,00</div>
+<div class="sub" id="dailyNote">Registre suas entradas, despesas e contas.</div>
+</div>
+<div class="card"><h3>Próximas contas</h3><div id="upcoming" class="empty">Nenhuma conta cadastrada.</div></div>
+<div class="card"><h3>Atividade recente</h3><div id="recent" class="empty">Nenhum lançamento ainda.</div></div>
+</section>
+
+<section id="movimentos" class="tab hidden">
+<div class="panel">
+<h2>Registrar movimentação</h2>
+<form id="moveForm">
+<div class="row">
+<div><label for="type">Tipo</label><select id="type"><option value="income">Entrada de dinheiro</option><option value="expense">Despesa</option></select></div>
+<div><label for="amount">Valor (R$)</label><input id="amount" type="number" min="0.01" step="0.01" required placeholder="0,00"></div>
+</div>
+<label for="desc">Descrição</label><input id="desc" required maxlength="80" placeholder="Ex.: salário, mercado, transporte">
+<div class="row">
+<div><label for="date">Data</label><input id="date" type="date" required></div>
+<div><label for="category">Categoria</label>
+<select id="category">
+<option>Salário</option><option>Moradia</option><option>Alimentação</option><option>Transporte</option><option>Saúde</option><option>Filhos</option><option>Lazer</option><option>Mercado</option><option>Extra</option><option>Outros</option>
+</select>
+</div>
+</div>
+<label for="person">Quem registrou (opcional)</label><input id="person" maxlength="50" placeholder="Ex.: Roger">
+<button class="primary" type="submit">Salvar movimentação</button>
+</form>
+</div>
+<div class="card"><h3>Movimentações</h3><div id="movesList" class="empty">Nenhuma movimentação cadastrada.</div></div>
+</section>
+
+<section id="contas" class="tab hidden">
+<div class="panel">
+<h2>Adicionar conta</h2>
+<form id="billForm">
+<label for="billName">Nome da conta</label><input id="billName" required maxlength="80" placeholder="Ex.: aluguel, luz, internet">
+<div class="row">
+<div><label for="billAmount">Valor (R$)</label><input id="billAmount" type="number" min="0.01" step="0.01" required placeholder="0,00"></div>
+<div><label for="due">Vencimento</label><input id="due" type="date" required></div>
+</div>
+<div class="row">
+<div><label for="frequency">Frequência</label><select id="frequency"><option value="once">Uma vez</option><option value="monthly">Todo mês</option></select></div>
+<div><label for="responsible">Responsável (opcional)</label><input id="responsible" maxlength="50" placeholder="Nome"></div>
+</div>
+<button class="primary" type="submit">Adicionar conta</button>
+</form>
+</div>
+<div class="card"><h3>Contas cadastradas</h3><div id="billsList" class="empty">Nenhuma conta cadastrada.</div></div>
+</section>
+
+<section id="metas" class="tab hidden">
+<div class="panel">
+<h2>Criar meta</h2>
+<form id="goalForm">
+<label for="goalName">Nome da meta</label><input id="goalName" required maxlength="80" placeholder="Ex.: fundo de emergência">
+<div class="row">
+<div><label for="goalTarget">Quanto quer juntar (R$)</label><input id="goalTarget" type="number" min="0.01" step="0.01" required placeholder="2000"></div>
+<div><label for="goalSaved">Quanto já guardou (R$)</label><input id="goalSaved" type="number" min="0" step="0.01" value="0" required></div>
+</div>
+<button class="primary" type="submit">Criar meta</button>
+</form>
+</div>
+<div class="card"><h3>Suas metas</h3><div id="goalsList" class="empty">Nenhuma meta cadastrada.</div></div>
+</section>
+
+<section id="relatorio" class="tab hidden">
+<div class="card"><h2>Resumo mensal</h2><label for="reportMonth">Escolha o mês</label><input id="reportMonth" type="month"><p class="sub" id="monthLabel"></p><div id="report"></div></div>
+<div class="card"><h3>Como funciona o limite diário?</h3><p class="sub">O cálculo considera entradas e despesas registradas no mês escolhido, além das contas ainda pendentes com vencimento até o fim desse mês. O resultado é dividido pelos dias restantes do mês atual. É uma estimativa, não o saldo bancário real.</p></div>
+</section>
+
+<section id="casa" class="tab hidden">
+<div class="card">
+<h2>Configurações da casa</h2>
+<label for="houseName">Nome da casa (opcional)</label><input id="houseName" maxlength="60" placeholder="Ex.: Minha casa">
+<label for="mode">Como você vai usar?</label>
+<select id="mode"><option value="individual">Individual</option><option value="couple">Casal</option><option value="family">Família</option></select>
+<button id="saveSettings" class="primary" type="button">Salvar configurações</button>
+<p class="sub" id="settingsNote">Os dados são salvos localmente neste aparelho. A sincronização entre familiares ainda não está disponível.</p>
+<button id="export" class="primary" type="button">Exportar meus dados</button>
+<button id="importButton" class="primary" type="button" style="background:#475569">Importar cópia de segurança</button>
+<input id="importFile" type="file" accept=".json,application/json" hidden>
+<button id="clear" class="primary" type="button" style="background:#9f2d24">Apagar todos os dados</button>
+</div>
+</section>
+<div class="foot">Casa em Dia • protótipo para testes</div>
+</main>
+
+<script>
+'use strict';
+const $ = id => document.getElementById(id);
+const money = n => Number(n || 0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
+const today = () => {
+ const d=new Date();
+ return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+};
+const monthKey = d => (d || '').slice(0,7);
+const uid = () => Date.now().toString(36)+Math.random().toString(36).slice(2,8);
+
+let data;
+try {
+ data=JSON.parse(localStorage.getItem('casaEmDiaData')||'{}');
+} catch(e) { data={}; }
+
+if(!data || typeof data!=='object' || Array.isArray(data)) data={};
+data.moves=Array.isArray(data.moves)?data.moves:[];
+data.bills=Array.isArray(data.bills)?data.bills:[];
+data.goals=Array.isArray(data.goals)?data.goals:[];
+data.settings=data.settings||{name:'',mode:'individual'};
+
+function save(){
+ try {
+  localStorage.setItem('casaEmDiaData',JSON.stringify(data));
+ } catch(e) {
+  alert('Não foi possível salvar. Exporte seus dados e confira o espaço disponível no aparelho.');
+ }
+ render();
+}
+function el(tag,cls,html){
+ const n=document.createElement(tag);
+ if(cls)n.className=cls;
+ if(html!==undefined)n.innerHTML=html;
+ return n;
+}
+function esc(s){
+ return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function btn(label,fn){
+ const b=el('button','secondary',esc(label));
+ b.type='button';b.addEventListener('click',fn);return b;
+}
+function itemRow(title,meta,amount,actions=[]){
+ const r=el('div','item');
+ const left=el('div');
+ const strong=el('strong');strong.textContent=title;
+ const small=el('small');small.textContent=meta||'';
+ left.append(strong,small);
+ const right=el('div');right.style.textAlign='right';
+ const amt=el('div','amount');amt.textContent=amount;right.append(amt);
+ actions.forEach(a=>right.append(a));
+ r.append(left,right);return r;
+}
+function validDate(s){return /^\d{4}-\d{2}-\d{2}$/.test(s||'');}
+function shiftMonth(dateString){
+ const parts=dateString.split('-').map(Number);
+ const year=parts[0],month=parts[1],day=parts[2];
+ const nextMonth=month===12?1:month+1;
+ const nextYear=month===12?year+1:year;
+ const lastDay=new Date(nextYear,nextMonth,0).getDate();
+ return `${nextYear}-${String(nextMonth).padStart(2,'0')}-${String(Math.min(day,lastDay)).padStart(2,'0')}`;
+}
+function monthSums(month){
+ const moves=data.moves.filter(x=>monthKey(x.date)===month);
+ const income=moves.filter(x=>x.type==='income').reduce((s,x)=>s+Number(x.amount||0),0);
+ const expense=moves.filter(x=>x.type==='expense').reduce((s,x)=>s+Number(x.amount||0),0);
+ const pending=data.bills.filter(b=>!b.paid&&monthKey(b.due)<=month).reduce((s,b)=>s+Number(b.amount||0),0);
+ return {income,expense,pending,balance:income-expense-pending};
+}
+function sums(){
+ const month=today().slice(0,7);
+ const s=monthSums(month);
+ const d=new Date();
+ const remaining=new Date(d.getFullYear(),d.getMonth()+1,0).getDate()-d.getDate()+1;
+ return {...s,daily:Math.max(0,s.balance)/Math.max(1,remaining),remaining};
+}
+function render(){
+ const s=sums();
+ $('mIncome').textContent=money(s.income);
+ $('mExpense').textContent=money(s.expense);
+ $('mBills').textContent=money(s.pending);
+ $('mBalance').textContent=money(s.balance);
+ $('mBalance').className='metric '+(s.balance>=0?'good':'bad');
+ $('daily').textContent=money(s.daily)+'/dia';
+ $('dailyNote').textContent=`Estimativa para ${s.remaining} dia(s), incluindo hoje. Confira seu saldo real antes de gastar.`;
+
+ const upcoming=$('upcoming');upcoming.replaceChildren();
+ const future=data.bills.filter(b=>!b.paid).sort((a,b)=>a.due.localeCompare(b.due)).slice(0,5);
+ upcoming.className=future.length?'':'empty';
+ if(!future.length)upcoming.textContent='Nenhuma conta pendente.';
+ future.forEach(b=>upcoming.append(itemRow(b.name,`Vence ${b.due.split('-').reverse().join('/')} • ${b.frequency==='monthly'?'mensal':'uma vez'}`,money(b.amount))));
+
+ const recent=$('recent');recent.replaceChildren();
+ const latest=[...data.moves].sort((a,b)=>b.date.localeCompare(a.date)).slice(0,5);
+ recent.className=latest.length?'':'empty';
+ if(!latest.length)recent.textContent='Nenhum lançamento ainda.';
+ latest.forEach(x=>recent.append(itemRow(x.desc,`${x.date.split('-').reverse().join('/')} • ${x.category}`,`${x.type==='income'?'+':'−'} ${money(x.amount)}`)));
+
+ const ml=$('movesList');ml.replaceChildren();
+ ml.className=data.moves.length?'':'empty';
+ if(!data.moves.length)ml.textContent='Nenhuma movimentação cadastrada.';
+ [...data.moves].sort((a,b)=>b.date.localeCompare(a.date)).forEach(x=>{
+  ml.append(itemRow(x.desc,`${x.date.split('-').reverse().join('/')} • ${x.category}${x.person?' • '+x.person:''}`,`${x.type==='income'?'+':'−'} ${money(x.amount)}`,[btn('Excluir',()=>{
+   if(confirm('Excluir esta movimentação?')){data.moves=data.moves.filter(y=>y.id!==x.id);save();}
+  })]));
+ });
+
+ const bl=$('billsList');bl.replaceChildren();
+ bl.className=data.bills.length?'':'empty';
+ if(!data.bills.length)bl.textContent='Nenhuma conta cadastrada.';
+ [...data.bills].sort((a,b)=>a.due.localeCompare(b.due)).forEach(b=>{
+  const actions=[];
+  actions.push(btn(b.paid?'Desfazer pagamento':'Marcar paga',()=>{
+   if(!b.paid){
+    b.paid=true;
+    if(b.frequency==='monthly'){
+     const next={
+      id:uid(),name:b.name,amount:Number(b.amount),due:shiftMonth(b.due),
+      frequency:'monthly',responsible:b.responsible||'',paid:false,
+      parentId:b.id
+     };
+     b.nextId=next.id;
+     data.bills.push(next);
+    }
+   } else {
+    b.paid=false;
+    if(b.nextId){
+     const next=data.bills.find(x=>x.id===b.nextId);
+     if(next && !next.paid){
+      data.bills=data.bills.filter(x=>x.id!==next.id);
+     }
+     delete b.nextId;
+    }
+   }
+   save();
+  }));
+  actions.push(btn('Excluir',()=>{
+   if(confirm('Excluir esta conta?')){
+    const linked=b.nextId;
+    data.bills=data.bills.filter(x=>x.id!==b.id&&x.id!==linked);
+    save();
+   }
+  }));
+  bl.append(itemRow(b.name,`Vencimento: ${b.due.split('-').reverse().join('/')} • ${b.responsible||'Sem responsável'} • ${b.paid?'Paga':'Pendente'}`,money(b.amount),actions));
+ });
+
+ const gl=$('goalsList');gl.replaceChildren();
+ gl.className=data.goals.length?'':'empty';
+ if(!data.goals.length)gl.textContent='Nenhuma meta cadastrada.';
+ data.goals.forEach(g=>{
+  const box=el('div','item');
+  const pct=Math.min(100,Math.round(Number(g.saved)/Number(g.target)*100));
+  const left=el('div');
+  const strong=el('strong');strong.textContent=g.name;
+  const small=el('small');small.textContent=`${money(g.saved)} de ${money(g.target)} • ${pct}%`;
+  const bar=el('div','progress');const fill=el('div');fill.style.width=pct+'%';bar.append(fill);
+  left.append(strong,small,bar);
+  const right=el('div');right.style.textAlign='right';
+  const amount=el('div','amount');amount.textContent=money(Math.max(0,g.target-g.saved));
+  right.append(amount);
+  right.append(btn('Guardar valor',()=>{
+   const raw=prompt('Quanto você guardou para esta meta? (R$)');
+   if(raw===null)return;
+   const v=Number(raw.trim().replace(/\./g,'').replace(',','.'));
+   if(Number.isFinite(v)&&v>0){g.saved=Number(g.saved)+v;save();}
+   else alert('Digite um valor válido maior que zero.');
+  }));
+  right.append(btn('Excluir',()=>{
+   if(confirm('Excluir esta meta?')){data.goals=data.goals.filter(y=>y.id!==g.id);save();}
+  }));
+  box.append(left,right);gl.append(box);
+ });
+
+ $('houseName').value=data.settings.name||'';
+ $('mode').value=data.settings.mode||'individual';
+ renderReport();
+}
+function renderReport(){
+ const selected=$('reportMonth').value||today().slice(0,7);
+ const s=monthSums(selected);
+ $('monthLabel').textContent=new Date(selected+'-15T12:00:00').toLocaleDateString('pt-BR',{month:'long',year:'numeric'});
+ const report=$('report');report.replaceChildren();
+ const rows=[
+  ['Entradas registradas',money(s.income)],
+  ['Despesas registradas',money(s.expense)],
+  ['Contas pendentes vencidas ou deste mês',money(s.pending)],
+  ['Saldo estimado após contas',money(s.balance)],
+ ];
+ rows.forEach(([label,value],i)=>{
+  const row=el('div','item');
+  const l=el('span');l.textContent=label;
+  const v=el('strong');v.textContent=value;
+  if(i===3)v.className=s.balance>=0?'good':'bad';
+  row.append(l,v);report.append(row);
+ });
+ if(selected===today().slice(0,7)){
+  const d=new Date();
+  const remaining=new Date(d.getFullYear(),d.getMonth()+1,0).getDate()-d.getDate()+1;
+  const row=el('div','item');
+  const l=el('span');l.textContent='Limite estimado por dia';
+  const v=el('strong');v.textContent=money(Math.max(0,s.balance)/Math.max(1,remaining));
+  row.append(l,v);report.append(row);
+ }
+}
+function openTab(name){
+ document.querySelectorAll('[data-tab]').forEach(x=>x.classList.toggle('active',x.dataset.tab===name));
+ document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('hidden',x.id!==name));
+}
+document.querySelectorAll('[data-tab]').forEach(b=>b.addEventListener('click',()=>openTab(b.dataset.tab)));
+
+$('date').value=today();
+$('due').value=today();
+$('reportMonth').value=today().slice(0,7);
+$('reportMonth').addEventListener('change',renderReport);
+
+$('moveForm').addEventListener('submit',e=>{
+ e.preventDefault();
+ const amount=Number($('amount').value);
+ if(!Number.isFinite(amount)||amount<=0)return alert('Informe um valor válido.');
+ data.moves.push({
+  id:uid(),type:$('type').value,amount,
+  desc:$('desc').value.trim(),date:$('date').value,
+  category:$('category').value,person:$('person').value.trim()
+ });
+ e.target.reset();$('date').value=today();
+ save();openTab('inicio');
+});
+
+$('billForm').addEventListener('submit',e=>{
+ e.preventDefault();
+ const amount=Number($('billAmount').value);
+ if(!Number.isFinite(amount)||amount<=0)return alert('Informe um valor válido.');
+ data.bills.push({
+  id:uid(),name:$('billName').value.trim(),amount,
+  due:$('due').value,frequency:$('frequency').value,
+  responsible:$('responsible').value.trim(),paid:false
+ });
+ e.target.reset();$('due').value=today();
+ save();
+});
+
+$('goalForm').addEventListener('submit',e=>{
+ e.preventDefault();
+ const target=Number($('goalTarget').value);
+ const saved=Number($('goalSaved').value);
+ if(!Number.isFinite(target)||target<=0||!Number.isFinite(saved)||saved<0){
+  return alert('Confira os valores da meta.');
+ }
+ data.goals.push({id:uid(),name:$('goalName').value.trim(),target,saved});
+ e.target.reset();$('goalSaved').value='0';save();
+});
+
+$('saveSettings').addEventListener('click',()=>{
+ data.settings={name:$('houseName').value.trim(),mode:$('mode').value};
+ save();$('settingsNote').textContent='Configurações salvas neste aparelho.';
+});
+
+$('export').addEventListener('click',()=>{
+ const blob=new Blob([JSON.stringify(data,null,2)],{type:'applic
