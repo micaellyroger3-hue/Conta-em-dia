@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#146c5b">
 <link rel="manifest" href="./Manifest.json">
 <title>Casa em Dia</title>
-</head>
+<style>
 :root{--ink:#17212b;--muted:#64748b;--line:#e2e8f0;--bg:#f5f7fa;--accent:#146c5b;--soft:#e5f4ef;--warn:#9a3412}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--ink);font:16px system-ui,-apple-system,sans-serif}
