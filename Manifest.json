@@ -1,8 +1,11 @@
-name Casa em Dia, 
-short_name Casa, 
-start_url ./casaemdiaprototipo.html,
-display standalone, 
-background color #146C5B, 
-theme color #146C5B, 
-description com a descrição do app, 
-e lang pt-BR.
+
+{
+  "name": "Casa em Dia",
+  "short_name": "Casa",
+  "start_url": "./casaemdiaprototipo.html",
+  "display": "standalone",
+  "background_color": "#146C5B",
+  "theme_color": "#146C5B",
+  "description": "Organize o dinheiro da casa, pague suas contas e realize seus planos.",
+  "lang": "pt-BR"
+}
